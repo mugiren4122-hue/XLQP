@@ -1,0 +1,1136 @@
+
+ UserInputService = game:GetService("UserInputService")
+ TweenService = game:GetService("TweenService")
+ RunService = game:GetService("RunService")
+ Players = game:GetService("Players")
+ LocalPlayer = Players.LocalPlayer
+ Mouse = LocalPlayer:GetMouse()
+TextService = game:GetService("TextService")
+HttpService = game:GetService("HttpService")
+GuiService = game:GetService("GuiService")
+LocalizationService = game:GetService("LocalizationService")
+Lighting = game:GetService("Lighting")
+LogService = game:GetService("LogService")
+HapticService = game:GetService("HapticService")
+if type(setfpscap)=="function" then
+	if not pcall(setfpscap,999999999999) then warn("Executor failed to set the FPS cap!") end
+else
+	warn("Executor does not support setfpscap!")
+end
+local XLQPDiscordAuthUrl = "https://xlqpauth.vercel.app/api/login"
+local XLQPRoyalThemeMusicUrl = "https://github.com/josediaz765/XLQP-dances/raw/refs/heads/main/Mattyeux%2C%20Princess%20Chelsea%2C%20Videoclub%20-%20Sometimes.mp3"
+local XLQPRoyalThemeMusicName = "Sometimes"
+local XLQPGlobalChatAuthUrl = "https://raw.githubusercontent.com/josediaz765/Hi/main/api_wrapper.lua"
+
+if not getgenv then
+	getgenv = function() return _G end
+end
+
+getgenv().True = true
+getgenv().False = false
+
+local XLQPEnvironment = getgenv()
+local XLQPSecureMode = XLQPEnvironment.XLQP_SECURE == true or XLQPEnvironment.XLQP_Secure == true
+local XLQPDebugMode = XLQPEnvironment.XLQP_DEBUG == true or XLQPEnvironment.XLQP_Debug == true
+local XLQPWarn = (XLQPSecureMode and not XLQPDebugMode) and function() end or warn
+local XLQPPrint = (XLQPSecureMode and not XLQPDebugMode) and function() end or print
+XLQPEnvironment.XLQPRealWarn = warn
+XLQPEnvironment.XLQPRealPrint = print
+local ipairs = (function()
+	local rawIpairs = XLQPEnvironment.__XLQPRawIpairs or ipairs
+	XLQPEnvironment.__XLQPRawIpairs = rawIpairs
+	local function guarded(value)
+		if typeof(value) == "Instance" then return rawIpairs(value:GetChildren()) end
+		if type(value) ~= "table" then return rawIpairs({}) end
+		return rawIpairs(value)
+	end
+	if XLQPEnvironment.XLQP_NO_IPAIRS_GUARD ~= true then pcall(function() XLQPEnvironment.ipairs = guarded end) end
+	return guarded
+end)()
+
+local warn = XLQPWarn
+local print = XLQPPrint
+
+local XLQPSecureCapable = XLQPSecureMode
+	and type(getcustomasset or getsynasset) == "function"
+	and type(writefile) == "function"
+	and type(isfile) == "function"
+	and type(makefolder) == "function"
+	and type(isfolder) == "function"
+
+if XLQPSecureMode and not XLQPEnvironment.XLQPAntiDetectId then
+	local entropy = tostring(tick()) .. tostring(os.clock()) .. tostring(math.random())
+	pcall(function() entropy = entropy .. game:GetService("HttpService"):GenerateGUID(false) end)
+	local seed = 2166136261
+	for i = 1, #entropy do
+		seed = (seed * 31 + entropy:byte(i)) % 4294967296
+	end
+	XLQPEnvironment.XLQPAntiDetectId = string.format("%08x", math.floor(seed))
+end
+
+local XLQPNameAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+local XLQPNames = setmetatable({}, {__index = function(store, base)
+	local resolved = base
+	if XLQPSecureMode then
+		local seed = tostring(XLQPEnvironment.XLQPAntiDetectId) .. tostring(base)
+		local hash = 2166136261
+		for i = 1, #seed do
+			hash = (hash * 31 + seed:byte(i)) % 4294967296
+		end
+		local letter = hash % 26 + 1
+		resolved = XLQPNameAlphabet:sub(letter, letter)
+		for i = 1, 11 do
+			hash = (hash * 31 + i * 97) % 4294967296
+			local index = hash % #XLQPNameAlphabet + 1
+			resolved = resolved .. XLQPNameAlphabet:sub(index, index)
+		end
+	end
+	store[base] = resolved
+	return resolved
+end})
+
+local function XLQPProtectGui(gui)
+	if typeof(gui) ~= "Instance" then return gui end
+	if syn and type(syn.protect_gui) == "function" then pcall(syn.protect_gui, gui) end
+	if type(protectgui) == "function" then pcall(protectgui, gui) end
+	if type(protect_gui) == "function" then pcall(protect_gui, gui) end
+	return gui
+end
+
+if not game then
+	game = {
+		CoreGui = {},
+		GetService = function(_, name)
+			return {}
+		end
+	}
+end
+
+if type(gethui) ~= "function" then
+	getgenv().gethui = function()
+		return game:GetService("CoreGui")
+	end
+	gethui = getgenv().gethui
+end
+
+local function XLQPGetGuiParent()
+	local inStudio = false
+	pcall(function() inStudio = game:GetService("RunService"):IsStudio() end)
+	if inStudio then
+		local player = game:GetService("Players").LocalPlayer
+		local playerGui = player and (player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 5))
+		if playerGui then return playerGui end
+	end
+	local ok, hiddenUi = pcall(function() return gethui() end)
+	if ok and hiddenUi then return hiddenUi end
+	return game:GetService("CoreGui")
+end
+
+local XLQPSecureBuiltins = {
+	["10137794784"] = true, ["102241658697200"] = true, ["10411342089"] = true,
+	["10489694483"] = true, ["10489694982"] = true, ["10489703350"] = true,
+	["10734950309"] = true, ["10871266112"] = true, ["113706656042034"] = true,
+	["115037290162561"] = true, ["11534834464"] = true, ["115391784333228"] = true,
+	["119090403860693"] = true, ["119416819821507"] = true, ["120347551836061"] = true,
+	["120651148831946"] = true, ["1223527680"] = true, ["124951621656853"] = true,
+	["126347222554873"] = true, ["131030557308160"] = true, ["134569085797091"] = true,
+	["134761139059108"] = true, ["13530555599"] = true, ["13575869725"] = true,
+	["140577890662283"] = true, ["14240466919"] = true, ["14385986465"] = true,
+	["14385992605"] = true, ["14386216487"] = true, ["14386226155"] = true,
+	["14386232387"] = true, ["14386246782"] = true, ["14386256326"] = true,
+	["14562122532"] = true, ["1522228539"] = true, ["15396333997"] = true,
+	["15567974330"] = true, ["16820900803"] = true, ["17349099636"] = true,
+	["17593739280"] = true, ["18349889388"] = true, ["18440998488"] = true,
+	["18750416283"] = true, ["2328131566"] = true, ["240651405"] = true,
+	["240651611"] = true, ["240651660"] = true, ["2581764604"] = true,
+	["261307429"] = true, ["280653194"] = true, ["3120637534"] = true,
+	["3926305904"] = true, ["3944680095"] = true, ["4034150594"] = true,
+	["4155801252"] = true, ["4384403532"] = true, ["4483345998"] = true,
+	["4483362458"] = true, ["4996891970"] = true, ["5013032505"] = true,
+	["5103222410"] = true, ["5107155560"] = true, ["534443739"] = true,
+	["5554236805"] = true, ["5946093983"] = true, ["6014261993"] = true,
+	["6026568198"] = true, ["6031071053"] = true, ["6031075938"] = true,
+	["6031090995"] = true, ["6031094678"] = true, ["6031154871"] = true,
+	["6031229361"] = true, ["6031265976"] = true, ["6032194565"] = true,
+	["6034849503"] = true, ["6075757398"] = true, ["6153965696"] = true,
+	["6723921202"] = true, ["7072706796"] = true, ["7072718332"] = true,
+	["7072719338"] = true, ["7072720870"] = true, ["7072725342"] = true,
+	["7445543667"] = true, ["75883179428189"] = true, ["7723993893"] = true,
+	["7733955511"] = true, ["7733955740"] = true, ["77840188181333"] = true,
+	["85367790036886"] = true, ["87437544236708"] = true, ["8834748103"] = true,
+	["9027816797"] = true, ["90593114212596"] = true, ["9060788686"] = true,
+	["9087431519"] = true, ["9134755504"] = true, ["9134761478"] = true,
+	["9134762943"] = true, ["9134765994"] = true, ["9134770786"] = true,
+	["9134774810"] = true, ["9134778004"] = true, ["9134780101"] = true,
+	["9134785384"] = true, ["9134787693"] = true, ["91756129096042"] = true,
+	["9239322394"] = true, ["93522081013627"] = true, ["96265482350413"] = true,
+	["97136202386756"] = true, ["97880448391331"] = true, ["98455290625865"] = true
+}
+local XLQPSecureCacheFolder = "XLQPGen1/secure-assets-v3"
+local XLQPSecurePending = {}
+local XLQPSecureResolved = {}
+local XLQPSecureFailures = 0
+local XLQPGetCustomAsset = getcustomasset or getsynasset
+
+local function XLQPAssetId(value)
+	if type(value) == "number" then return tostring(value) end
+	if type(value) ~= "string" then return nil end
+	return value:match("^rbxassetid://(%d+)$")
+		or value:match("^https?://www%.roblox%.com/asset/%?id=(%d+)")
+		or value:match("^https?://www%.roblox%.com/library/(%d+)")
+		or value:match("^https?://create%.roblox%.com/store/asset/(%d+)")
+		or value:match("^https?://assetdelivery%.roblox%.com/.-[?&]id=(%d+)")
+		or value:match("^(%d+)$")
+end
+
+local function XLQPRegisterSecureBuiltin(value)
+	local id = XLQPAssetId(value)
+	if id then XLQPSecureBuiltins[id] = true end
+	return id
+end
+
+local function XLQPRegisterUserAssets(value)
+	if value == nil then return end
+	if type(value) == "table" then
+		for _, entry in pairs(value) do XLQPRegisterSecureBuiltin(entry) end
+	else
+		XLQPRegisterSecureBuiltin(value)
+	end
+end
+
+XLQPRegisterUserAssets(XLQPEnvironment.XLQP_ASSET_ID)
+XLQPRegisterUserAssets(XLQPEnvironment.XLQP_Asset_Id)
+XLQPRegisterUserAssets(XLQPEnvironment.XLQP_ASSET_IDS)
+
+local XLQPAssetModelRaw = XLQPEnvironment.XLQP_ASSET_ID or XLQPEnvironment.XLQP_Asset_Id
+local XLQPAssetModelId = XLQPAssetId(XLQPAssetModelRaw)
+local XLQPAssetModel
+local XLQPAssetModelIcons
+local XLQPAssetModelLoaded = false
+local XLQPAssetModelError
+
+if XLQPAssetModelRaw ~= nil and not XLQPAssetModelId then
+	XLQPAssetModelError = "Invalid model asset: '" .. tostring(XLQPAssetModelRaw) .. "' is not an asset ID. Wrong model asset, please fix it."
+end
+
+local function XLQPHarvestAssetModel(root)
+	local icons = {}
+	local function visit(instance)
+		local value
+		if instance:IsA("ImageLabel") or instance:IsA("ImageButton") then
+			value = instance.Image
+		elseif instance:IsA("Decal") or instance:IsA("Texture") then
+			value = instance.Texture
+		elseif instance:IsA("StringValue") then
+			value = instance.Value
+		end
+		if type(value) == "string" and value ~= "" then
+			icons[instance.Name] = value
+			XLQPRegisterSecureBuiltin(value)
+		end
+	end
+	pcall(visit, root)
+	for _, descendant in ipairs(root:GetDescendants()) do pcall(visit, descendant) end
+	return icons
+end
+
+local function XLQPGetAssetModel()
+	if XLQPAssetModelLoaded then return XLQPAssetModel, XLQPAssetModelIcons end
+	XLQPAssetModelLoaded = true
+	if not XLQPAssetModelId then return nil, nil end
+	local fetchOk, objects = pcall(function() return game:GetObjects("rbxassetid://" .. XLQPAssetModelId) end)
+	if not fetchOk or type(objects) ~= "table" or typeof(objects[1]) ~= "Instance" then
+		XLQPAssetModelIcons = {}
+		XLQPAssetModelError = "Invalid model asset " .. XLQPAssetModelId .. ". It could not be loaded, so it is private, deleted, not a model, or the wrong ID. Wrong model asset, please fix it."
+		return nil, XLQPAssetModelIcons
+	end
+	XLQPAssetModel = objects[1]
+	local harvestOk, icons = pcall(XLQPHarvestAssetModel, XLQPAssetModel)
+	XLQPAssetModelIcons = (harvestOk and type(icons) == "table") and icons or {}
+	if next(XLQPAssetModelIcons) == nil then
+		XLQPAssetModelError = "Model asset " .. XLQPAssetModelId .. " loaded but holds no images. Wrong model asset, please fix it."
+	end
+	return XLQPAssetModel, XLQPAssetModelIcons
+end
+
+local function XLQPAssetModelIssue()
+	if XLQPAssetModelRaw == nil then return nil end
+	XLQPGetAssetModel()
+	return XLQPAssetModelError
+end
+
+local function XLQPModelIcon(name)
+	if not XLQPAssetModelId or type(name) ~= "string" or name == "" then return nil end
+	local _, icons = XLQPGetAssetModel()
+	return icons and icons[name] or nil
+end
+
+local function XLQPTranslateAsset(value)
+	if type(value) ~= "string" or not XLQPAssetModelId then return value end
+	local iconKey = value:match("^xlqpmodel://(.+)$") or value:match("^xlqpasset://(.+)$")
+	if not iconKey then return value end
+	return XLQPModelIcon(iconKey) or ""
+end
+
+if XLQPAssetModelRaw ~= nil then
+	pcall(function()
+		task.spawn(function()
+			local issue = XLQPAssetModelIssue()
+			if issue then XLQPWarn("[XLQPGen1] " .. issue) end
+		end)
+	end)
+end
+
+function XLQPRequestFunctions()
+	local list = {}
+	local seen = {}
+	local environment = getgenv and getgenv() or nil
+	local function add(candidate)
+		if type(candidate) == "function" and not seen[candidate] then
+			seen[candidate] = true
+			list[#list + 1] = candidate
+		end
+	end
+	add(request)
+	add(environment and environment.request)
+	add(http_request)
+	add(environment and environment.http_request)
+	add(http and http.request)
+	add(fluxus and fluxus.request)
+	add(syn and syn.request)
+	add(flux and flux.request)
+	add(krnl and krnl.request)
+	return list
+end
+
+function XLQPResolveRequest()
+	return XLQPRequestFunctions()[1]
+end
+
+local function XLQPSecureHttpGet(url)
+	url=tostring(url or "")
+	if url=="" then return nil end
+	if XLQPGen1 and XLQPGen1.WhitelistLoggerUrl then pcall(function() XLQPGen1:WhitelistLoggerUrl(url) end) end
+	for _,requester in ipairs(XLQPRequestFunctions()) do
+		local requestOk,response=pcall(requester,{
+			Url=url,
+			Method="GET",
+			Headers={
+				["User-Agent"]="Mozilla/5.0 XLQPGen1/1.0",
+				["Accept"]="*/*",
+				["Cache-Control"]="no-cache"
+			}
+		})
+		if requestOk and type(response)=="table" then
+			local status=tonumber(response.StatusCode or response.status_code or response.Status or response.status or 200) or 200
+			local body=response.Body or response.body or response.ResponseBody or response.responseBody
+			if status>=200 and status<400 and type(body)=="string" and body~="" then return body end
+		end
+	end
+	local ok,body=pcall(function() return game:HttpGet(url,true) end)
+	if ok and type(body)=="string" and body~="" then return body end
+	return nil
+end
+
+local function XLQPIsImageBody(body)
+	if type(body) ~= "string" or #body < 12 then return false end
+	if body:sub(1, 4) == "\137PNG" or body:sub(1, 3) == "\255\216\255" or body:sub(1, 4) == "GIF8" then return true end
+	return body:sub(1, 4) == "RIFF" and body:sub(9, 12) == "WEBP"
+end
+
+local function XLQPSecureThumbnailBody(assetId)
+	local metadata = XLQPSecureHttpGet("https://thumbnails.roblox.com/v1/assets?assetIds=" .. tostring(assetId) .. "&returnPolicy=PlaceHolder&size=420x420&format=Png&isCircular=false")
+	if not metadata then return nil end
+	local imageUrl
+	pcall(function()
+		local decoded = game:GetService("HttpService"):JSONDecode(metadata)
+		imageUrl = decoded and decoded.data and decoded.data[1] and decoded.data[1].imageUrl
+	end)
+	return imageUrl and XLQPSecureHttpGet(imageUrl) or nil
+end
+
+local function XLQPPrepareSecureFolder()
+	if not XLQPSecureCapable then return false end
+	if not (makefolder and isfolder and writefile and isfile and XLQPGetCustomAsset) then return false end
+	pcall(function() if not isfolder("XLQPGen1") then makefolder("XLQPGen1") end end)
+	pcall(function() if not isfolder(XLQPSecureCacheFolder) then makefolder(XLQPSecureCacheFolder) end end)
+	return true
+end
+
+local function XLQPThumbnailRequest(value, allowAvatar)
+	local id = XLQPAssetId(value)
+	if id then
+		if not XLQPSecureBuiltins[id] then return nil end
+		return "https://assetdelivery.roblox.com/v1/asset/?id=" .. id, "asset_" .. id, true
+	end
+	if not allowAvatar or type(value) ~= "string" then return nil end
+	local thumbType, thumbId = value:match("^rbxthumb://type=([^&]+)&id=(%d+)")
+	if not thumbId then return nil end
+	if thumbType == "AvatarHeadShot" then
+		return "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. thumbId .. "&size=420x420&format=Png&isCircular=false", "avatar_" .. thumbId
+	elseif thumbType == "Avatar" then
+		return "https://thumbnails.roblox.com/v1/users/avatar?userIds=" .. thumbId .. "&size=420x420&format=Png&isCircular=false", "avatar_body_" .. thumbId
+	elseif thumbType == "GameIcon" then
+		return "https://thumbnails.roblox.com/v1/places/gameicons?placeIds=" .. thumbId .. "&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false", "place_" .. thumbId
+	end
+	return nil
+end
+
+local function XLQPResolveSecureAsset(value, allowAvatar, callback)
+	if not XLQPSecureMode then
+		if callback then callback(value) end
+		return value
+	end
+	if type(value) ~= "string" or value == "" then return value end
+	if value:match("^rbxasset://") or value:match("^content://") or value:match("^synasset://") then
+		if callback then callback(value) end
+		return value
+	end
+	local trustedId=XLQPAssetId(value)
+	if trustedId and XLQPSecureBuiltins[trustedId] then
+		local nativeAsset="rbxassetid://"..trustedId
+		XLQPSecureResolved["asset_"..trustedId]=nativeAsset
+		if callback then callback(nativeAsset) end
+		return nativeAsset
+	end
+	if allowAvatar and value:match("^rbxthumb://") then
+		if callback then callback(value) end
+		return value
+	end
+	local endpoint, cacheKey, directAsset = XLQPThumbnailRequest(value, allowAvatar)
+	if not endpoint then return "" end
+	if XLQPSecureResolved[cacheKey] then
+		if callback then callback(XLQPSecureResolved[cacheKey]) end
+		return XLQPSecureResolved[cacheKey]
+	end
+	if not XLQPPrepareSecureFolder() then
+		XLQPSecureFailures += 1
+		return ""
+	end
+	local path = XLQPSecureCacheFolder .. "/" .. cacheKey .. ".png"
+	if isfile(path) then
+		local ok, asset = pcall(XLQPGetCustomAsset, path)
+		if ok and asset then
+			XLQPSecureResolved[cacheKey] = asset
+			if callback then callback(asset) end
+			return asset
+		end
+	end
+	XLQPSecurePending[cacheKey] = XLQPSecurePending[cacheKey] or {}
+	if callback then table.insert(XLQPSecurePending[cacheKey], callback) end
+	if #XLQPSecurePending[cacheKey] == (callback and 1 or 0) then
+		task.spawn(function()
+			local metadata
+			if not directAsset then metadata = XLQPSecureHttpGet(endpoint) end
+			local imageUrl
+			if metadata then
+				pcall(function()
+					local decoded = game:GetService("HttpService"):JSONDecode(metadata)
+					imageUrl = decoded and decoded.data and decoded.data[1] and decoded.data[1].imageUrl
+				end)
+			end
+			local imageBody = directAsset and XLQPSecureHttpGet(endpoint) or (imageUrl and XLQPSecureHttpGet(imageUrl))
+			if directAsset and not XLQPIsImageBody(imageBody) then
+				imageBody = XLQPSecureThumbnailBody(cacheKey:match("^asset_(%d+)$"))
+			end
+			local asset
+			if XLQPIsImageBody(imageBody) and pcall(writefile, path, imageBody) then
+				local ok
+				ok, asset = pcall(XLQPGetCustomAsset, path)
+				if not ok then asset = nil end
+			end
+			if asset then XLQPSecureResolved[cacheKey] = asset else XLQPSecureFailures += 1 end
+			local callbacks = XLQPSecurePending[cacheKey] or {}
+			XLQPSecurePending[cacheKey] = nil
+			for _, pendingCallback in ipairs(callbacks) do
+				if asset then pcall(pendingCallback, asset) end
+			end
+		end)
+	end
+	return ""
+end
+
+local function XLQPSetSecureAsset(object, property, value, allowAvatar)
+	value = XLQPTranslateAsset(value)
+	if not XLQPSecureMode then
+		object[property] = value
+		return value
+	end
+	local resolved = XLQPResolveSecureAsset(value, allowAvatar, function(asset)
+		if object and object.Parent then pcall(function() object[property] = asset end) end
+	end)
+	object[property] = resolved
+	return resolved
+end
+
+local XLQPSecureImageProperties = {
+	Image = true, HoverImage = true, PressedImage = true,
+	MidImage = true, TopImage = true, BottomImage = true, Texture = true
+}
+local XLQPSecureBlockedProperties = {
+	SoundId = true, Video = true, MeshId = true, TextureID = true, TextureId = true
+}
+
+local function XLQPAssignProperty(object, property, value)
+	if XLQPSecureImageProperties[property] and typeof(value)=="Instance" then
+		local assigned=pcall(function() object.ImageContent=Content.fromObject(value) end)
+		if not assigned then pcall(function() object[property]="" end) end
+		return value
+	end
+	if XLQPSecureImageProperties[property] then value = XLQPTranslateAsset(value) end
+	if XLQPSecureMode and XLQPSecureImageProperties[property] then
+		local allowAvatar = type(value) == "string" and value:match("^rbxthumb://") ~= nil
+		return XLQPSetSecureAsset(object, property, value, allowAvatar)
+	end
+	if XLQPSecureMode and XLQPSecureBlockedProperties[property] and type(value) == "string" then
+		if XLQPAssetId(value) or value:match("^rbxthumb://") or value:match("^https?://") then
+			object[property] = ""
+			return ""
+		end
+	end
+	object[property] = value
+	return value
+end
+
+local XLQPSecureImageGuardProps = {"Image", "HoverImage", "PressedImage"}
+local XLQPSecureScrollGuardProps = {"MidImage", "TopImage", "BottomImage"}
+XLQPSecureVideoGuardProps = {"Video"}
+XLQPSecureSoundGuardProps = {"SoundId"}
+local function XLQPGuardSecureAssetObject(object)
+	if not XLQPSecureMode or typeof(object) ~= "Instance" then return end
+	local properties
+	if object:IsA("ImageLabel") or object:IsA("ImageButton") then
+		properties = XLQPSecureImageGuardProps
+	elseif object:IsA("ScrollingFrame") then
+		properties = XLQPSecureScrollGuardProps
+	elseif object:IsA("VideoFrame") then
+		properties = XLQPSecureVideoGuardProps
+	elseif object:IsA("Sound") then
+		properties = XLQPSecureSoundGuardProps
+	else
+		return
+	end
+	local changing = {}
+	for _, property in ipairs(properties) do
+		local ok, signal = pcall(function() return object:GetPropertyChangedSignal(property) end)
+		if ok and signal then
+			signal:Connect(function()
+				if changing[property] then return end
+				local readOk, value = pcall(function() return object[property] end)
+				if not readOk or type(value) ~= "string" or value == "" then return end
+				if value:match("^rbxasset://") or value:match("^content://") or value:match("^synasset://") then return end
+				if XLQPSecureImageProperties[property] or XLQPSecureBlockedProperties[property] then
+					changing[property] = true
+					XLQPAssignProperty(object, property, value)
+					changing[property] = nil
+				end
+			end)
+		end
+	end
+end
+
+local function XLQPProtectGuiAssets(root)
+	if not XLQPSecureMode or typeof(root) ~= "Instance" then return end
+	XLQPGuardSecureAssetObject(root)
+	for _, descendant in ipairs(root:GetDescendants()) do XLQPGuardSecureAssetObject(descendant) end
+	root.DescendantAdded:Connect(XLQPGuardSecureAssetObject)
+end
+
+local XLQPGen1 = {
+	SecureMode = XLQPSecureMode,
+	SecureCapable = XLQPSecureCapable,
+	AntiDetectId = XLQPSecureMode and XLQPEnvironment.XLQPAntiDetectId or nil,
+	AssetModelId = XLQPAssetModelId,
+	Elements = {},
+	ThemeObjects = {},
+	Connections = {},
+	Flags = {},
+	AllElements = {},
+	CallbackTargets = {},
+	LibErrors = {},
+	Themes = {
+		Default = {
+			Main = Color3.fromRGB(10, 10, 10),      
+			Second = Color3.fromRGB(20, 20, 20),    
+			Stroke = Color3.fromRGB(60, 60, 60),    
+			Divider = Color3.fromRGB(40, 40, 40),   
+			Bloom = Color3.fromRGB(255, 255, 255),  
+			Text = Color3.fromRGB(230, 230, 230),   
+			TextDark = Color3.fromRGB(150, 150, 150) 
+		}
+	},
+	SelectedTheme = "Default",
+	Folder = nil,
+	SaveCfg = false,
+	_Destroyed = false,
+	_PerformanceMode = true,
+	HapticsEnabled = false,
+	HapticsDuration = 0.035,
+	_HapticLast = 0,
+	RichTextEnabled = true,
+	UIFontName = "Gotham",
+	UIFont = Enum.Font.Gotham
+}
+
+
+XLQPNativeThemeCards={
+	{Name="Indigo",Description="Deep indigo",Image="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.18,Theme={Main=Color3.fromRGB(18,18,35),Second=Color3.fromRGB(31,29,55),Stroke=Color3.fromRGB(79,72,145),Divider=Color3.fromRGB(49,46,86),Bloom=Color3.fromRGB(100,86,205),Text=Color3.fromRGB(239,239,255),TextDark=Color3.fromRGB(156,153,192),Accent=Color3.fromRGB(100,86,205)},PreviewColors={Color3.fromRGB(56,58,71),Color3.fromRGB(77,66,151),Color3.fromRGB(29,31,42),Color3.fromRGB(50,48,86)}},
+	{Name="Graphite",Description="Cool gray teal",Image="https://images.unsplash.com/photo-1609079332148-ce057e967197?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.18,Theme={Main=Color3.fromRGB(20,25,29),Second=Color3.fromRGB(35,42,47),Stroke=Color3.fromRGB(43,112,136),Divider=Color3.fromRGB(52,61,66),Bloom=Color3.fromRGB(29,135,171),Text=Color3.fromRGB(238,244,246),TextDark=Color3.fromRGB(145,158,164),Accent=Color3.fromRGB(29,135,171)},PreviewColors={Color3.fromRGB(58,66,70),Color3.fromRGB(27,111,144),Color3.fromRGB(33,39,43),Color3.fromRGB(49,83,92)}},
+	{Name="Warm",Description="Warm and soft",Image="https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.24,Theme={Main=Color3.fromRGB(245,240,232),Second=Color3.fromRGB(230,221,211),Stroke=Color3.fromRGB(77,67,62),Divider=Color3.fromRGB(201,191,180),Bloom=Color3.fromRGB(72,42,132),Text=Color3.fromRGB(45,40,38),TextDark=Color3.fromRGB(103,93,87),Accent=Color3.fromRGB(72,42,132)},PreviewColors={Color3.fromRGB(64,59,56),Color3.fromRGB(70,39,130),Color3.fromRGB(124,107,92),Color3.fromRGB(208,194,176)}},
+	{Name="Slate",Description="Cool blue-gray",Image="https://images.unsplash.com/photo-1612158560555-34306ad5e77c?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.28,Theme={Main=Color3.fromRGB(234,239,242),Second=Color3.fromRGB(216,226,231),Stroke=Color3.fromRGB(82,101,113),Divider=Color3.fromRGB(187,198,204),Bloom=Color3.fromRGB(16,103,92),Text=Color3.fromRGB(34,44,51),TextDark=Color3.fromRGB(86,100,108),Accent=Color3.fromRGB(16,103,92)},PreviewColors={Color3.fromRGB(9,101,85),Color3.fromRGB(91,109,120),Color3.fromRGB(44,57,67),Color3.fromRGB(10,113,106)}},
+	{Name="Ocean",Description="Deep navy blue",Image="https://images.unsplash.com/photo-1549074862-6173e20d02a8?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.18,Theme={Main=Color3.fromRGB(8,22,32),Second=Color3.fromRGB(16,38,53),Stroke=Color3.fromRGB(47,109,154),Divider=Color3.fromRGB(28,61,80),Bloom=Color3.fromRGB(39,190,226),Text=Color3.fromRGB(231,246,255),TextDark=Color3.fromRGB(130,163,184),Accent=Color3.fromRGB(39,190,226)},PreviewColors={Color3.fromRGB(30,172,224),Color3.fromRGB(78,102,126),Color3.fromRGB(78,112,147),Color3.fromRGB(31,186,217)}},
+	{Name="Nord",Description="Arctic frost",Image="https://images.unsplash.com/photo-1519681393784-d120267933ba?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.22,Theme={Main=Color3.fromRGB(33,42,54),Second=Color3.fromRGB(48,60,74),Stroke=Color3.fromRGB(85,112,128),Divider=Color3.fromRGB(59,73,88),Bloom=Color3.fromRGB(76,122,156),Text=Color3.fromRGB(237,243,248),TextDark=Color3.fromRGB(151,166,181),Accent=Color3.fromRGB(76,122,156)},PreviewColors={Color3.fromRGB(72,103,117),Color3.fromRGB(74,102,124),Color3.fromRGB(63,85,104),Color3.fromRGB(48,73,101)}},
+	{Name="Forest",Description="Deep forest",Image="https://images.unsplash.com/reserve/wPCyys8TPCHY3GXm2N2D_ssp_inthewoods_1.jpg?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.18,Theme={Main=Color3.fromRGB(8,25,20),Second=Color3.fromRGB(14,44,34),Stroke=Color3.fromRGB(25,109,85),Divider=Color3.fromRGB(32,67,53),Bloom=Color3.fromRGB(105,145,34),Text=Color3.fromRGB(232,247,239),TextDark=Color3.fromRGB(132,160,146),Accent=Color3.fromRGB(105,145,34)},PreviewColors={Color3.fromRGB(17,115,89),Color3.fromRGB(43,65,65),Color3.fromRGB(52,66,61),Color3.fromRGB(91,119,22)}},
+	{Name="Amethyst",Description="Royal purple",Image="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.17,Theme={Main=Color3.fromRGB(28,21,38),Second=Color3.fromRGB(49,33,64),Stroke=Color3.fromRGB(103,82,150),Divider=Color3.fromRGB(65,48,82),Bloom=Color3.fromRGB(145,75,177),Text=Color3.fromRGB(246,237,255),TextDark=Color3.fromRGB(169,146,188),Accent=Color3.fromRGB(145,75,177)},PreviewColors={Color3.fromRGB(93,73,144),Color3.fromRGB(69,67,83),Color3.fromRGB(62,56,74),Color3.fromRGB(145,75,164)}},
+	{Name="Rose",Description="Soft plum pink",Image="https://images.unsplash.com/photo-1700166523471-f2b1ceffbdc2?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.2,Theme={Main=Color3.fromRGB(39,23,31),Second=Color3.fromRGB(66,35,50),Stroke=Color3.fromRGB(157,76,106),Divider=Color3.fromRGB(80,48,61),Bloom=Color3.fromRGB(157,45,181),Text=Color3.fromRGB(255,237,245),TextDark=Color3.fromRGB(187,146,164),Accent=Color3.fromRGB(157,45,181)},PreviewColors={Color3.fromRGB(160,71,102),Color3.fromRGB(79,68,84),Color3.fromRGB(76,54,66),Color3.fromRGB(155,45,176)}},
+	{Name="Retro",Description="Warm vintage",Image="https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.3,Theme={Main=Color3.fromRGB(245,230,198),Second=Color3.fromRGB(226,204,160),Stroke=Color3.fromRGB(144,87,20),Divider=Color3.fromRGB(192,165,117),Bloom=Color3.fromRGB(44,83,69),Text=Color3.fromRGB(55,45,35),TextDark=Color3.fromRGB(112,89,65),Accent=Color3.fromRGB(144,87,20)},PreviewColors={Color3.fromRGB(145,82,11),Color3.fromRGB(121,104,76),Color3.fromRGB(38,76,69),Color3.fromRGB(173,128,62)}},
+	{Name="Glass",Description="Frosted glass",Image="https://images.unsplash.com/photo-1609079332148-ce057e967197?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.12,Theme={Main=Color3.fromRGB(11,23,37),Second=Color3.fromRGB(25,44,65),Stroke=Color3.fromRGB(55,103,151),Divider=Color3.fromRGB(42,65,88),Bloom=Color3.fromRGB(57,148,199),Text=Color3.fromRGB(240,247,253),TextDark=Color3.fromRGB(147,166,186),Accent=Color3.fromRGB(57,148,199),Glass=true},PreviewColors={Color3.fromRGB(42,93,139),Color3.fromRGB(55,74,93),Color3.fromRGB(64,91,116),Color3.fromRGB(33,139,185)}},
+	{Name="Porcelain",Description="Crisp and clean",Image="https://images.unsplash.com/photo-1612158560555-34306ad5e77c?fm=jpg&fit=crop&w=1600&q=82",ImageTransparency=.31,Theme={Main=Color3.fromRGB(247,249,250),Second=Color3.fromRGB(228,235,239),Stroke=Color3.fromRGB(31,101,131),Divider=Color3.fromRGB(195,207,214),Bloom=Color3.fromRGB(35,126,165),Text=Color3.fromRGB(30,39,47),TextDark=Color3.fromRGB(91,105,114),Accent=Color3.fromRGB(35,126,165)},PreviewColors={Color3.fromRGB(19,104,137),Color3.fromRGB(95,110,120),Color3.fromRGB(25,110,143),Color3.fromRGB(52,129,160)}}
+}
+function XLQPRegisterNativeThemes()
+	XLQPGen1.Themes=XLQPGen1.Themes or {}
+	for _,themeCard in ipairs(XLQPNativeThemeCards or {}) do
+		local themeData=themeCard.Theme
+		themeData.BackgroundImage=themeCard.Image
+		themeData.PreviewAsset=themeCard.PreviewAsset or "rbxassetid://8834748103"
+		themeData.ImageTransparency=themeCard.ImageTransparency
+		themeData.Description=themeCard.Description
+		themeData.NativeTheme=true
+		themeData.PreviewColors=themeCard.PreviewColors
+		XLQPGen1.Themes[themeCard.Name]=themeData
+	end
+	return XLQPGen1.Themes
+end
+XLQPRegisterNativeThemes()
+
+function XLQPResolveThemeName(name)
+	local raw=tostring(name or ""):gsub("^%s+",""):gsub("%s+$","")
+	if raw=="" then return nil end
+	if XLQPGen1.Themes[raw] then return raw end
+	local lower=raw:lower()
+	local aliases={
+		["dark"]="Default",
+		["default"]="Default",
+		["deep indigo"]="Indigo",
+		["cool gray teal"]="Graphite",
+		["warm and soft"]="Warm",
+		["cool blue-gray"]="Slate",
+		["deep navy blue"]="Ocean",
+		["arctic frost"]="Nord",
+		["deep forest"]="Forest",
+		["royal purple"]="Amethyst",
+		["soft plum pink"]="Rose",
+		["warm vintage"]="Retro",
+		["frosted glass"]="Glass",
+		["crisp and clean"]="Porcelain"
+	}
+	local alias=aliases[lower]
+	if alias then
+		if not XLQPGen1.Themes[alias] then XLQPRegisterNativeThemes() end
+		if XLQPGen1.Themes[alias] then return alias end
+	end
+	for _,themeCard in ipairs(XLQPNativeThemeCards or {}) do
+		if tostring(themeCard.Name):lower()==lower or tostring(themeCard.Description or ""):lower()==lower then
+			if not XLQPGen1.Themes[themeCard.Name] then XLQPRegisterNativeThemes() end
+			return XLQPGen1.Themes[themeCard.Name] and themeCard.Name or nil
+		end
+	end
+	for themeName,themeData in pairs(XLQPGen1.Themes or {}) do
+		if tostring(themeName):lower()==lower then return themeName end
+		if type(themeData)=="table" and tostring(themeData.Description or ""):lower()==lower then return themeName end
+	end
+	return nil
+end
+
+XLQPGen1._NeonStrokes = setmetatable({}, {__mode = "k"})
+XLQPGen1._NeonStrokeCount = 0
+
+function XLQPRegisterNeonStroke(stroke, active)
+	if typeof(stroke) ~= "Instance" then return end
+	local registry = XLQPGen1._NeonStrokes
+	local had = registry[stroke] ~= nil
+	if active then
+		if not had then XLQPGen1._NeonStrokeCount = XLQPGen1._NeonStrokeCount + 1 end
+		registry[stroke] = true
+	else
+		if had then XLQPGen1._NeonStrokeCount = math.max(0, XLQPGen1._NeonStrokeCount - 1) end
+		registry[stroke] = nil
+	end
+	if XLQPGen1._NeonStrokeCount > 0 and not XLQPGen1._NeonDriver then
+		local elapsed=0
+		XLQPGen1._NeonDriver = RunService.Heartbeat:Connect(function(deltaTime)
+			if XLQPGen1._NeonStrokeCount <= 0 then
+				if XLQPGen1._NeonDriver then XLQPGen1._NeonDriver:Disconnect() XLQPGen1._NeonDriver = nil end
+				return
+			end
+			if XLQPGen1._ReduceLagEnabled then return end
+			elapsed=elapsed+(tonumber(deltaTime) or 0)
+			if elapsed<1/15 then return end
+			elapsed=0
+			local color = Color3.fromHSV((tick() * 0.2) % 1, 1, 1)
+			for target in pairs(XLQPGen1._NeonStrokes) do
+				if target.Parent then target.Color = color end
+			end
+		end)
+	end
+end
+
+function XLQPGen1:IsUnlockedFor(lock)
+	if lock==nil or lock==false then return true end
+	local player=Players and Players.LocalPlayer
+	if not player then return true end
+	local list={}
+	if type(lock)=="table" then
+		for _,value in pairs(lock) do list[#list+1]=value end
+	else
+		list[1]=lock
+	end
+	if #list==0 then return true end
+	local userId=tonumber(player.UserId) or -1
+	local name=tostring(player.Name or ""):lower()
+	local display=tostring(player.DisplayName or ""):lower()
+	for _,value in ipairs(list) do
+		local numeric=tonumber(value)
+		if numeric and math.floor(numeric)==userId then return true end
+		if type(value)=="string" then
+			local text=value:lower():gsub("^@",""):gsub("^%s+",""):gsub("%s+$","")
+			if text~="" and (text==name or text==display) then return true end
+		end
+	end
+	return false
+end
+
+function XLQPGen1:_ExtractLock(config)
+	if type(config)~="table" then return nil end
+	local lock=config.LockedTo
+	if lock==nil then lock=config.lockedto end
+	if lock==nil then lock=config.LockTo end
+	if lock==nil then lock=config.AllowedUsers end
+	if lock==nil then lock=config.OnlyFor end
+	return lock
+end
+
+function XLQPGen1:_ResolveLock(config)
+	return self:IsUnlockedFor(self:_ExtractLock(config))
+end
+
+XLQPGen1.TabColorPalette={
+	Color3.fromRGB(96,208,255),Color3.fromRGB(255,222,140),Color3.fromRGB(255,168,208),
+	Color3.fromRGB(150,236,178),Color3.fromRGB(196,168,255),Color3.fromRGB(255,178,122),
+	Color3.fromRGB(130,196,255),Color3.fromRGB(244,150,150),Color3.fromRGB(168,240,232),
+	Color3.fromRGB(226,196,140)
+}
+
+function XLQPGen1:_AutoTabColor(name)
+	local palette=self.TabColorPalette or {}
+	if #palette==0 then return nil end
+	local text=tostring(name or "")
+	local total=0
+	for index=1,#text do total=total+string.byte(text,index)*index end
+	return palette[(total%#palette)+1]
+end
+
+function XLQPGen1:_LockedVault()
+	if self._LockedVaultFolder and self._LockedVaultFolder.Parent then return self._LockedVaultFolder end
+	local vault=Instance.new("Folder")
+	vault.Name="XLQPLockedElements"
+	vault.Parent=self._RootGui or game:GetService("CoreGui")
+	self._LockedVaultFolder=vault
+	return vault
+end
+
+function XLQPAttachCursorGlow(frame,hitbox,config)
+	if typeof(frame)~="Instance" or frame:GetAttribute("XLQPCursorGlow")==true then return nil end
+	config=type(config)=="table" and config or {}
+	if config.CursorGlow==false or config.Glow==false then return nil end
+	frame:SetAttribute("XLQPCursorGlow",true)
+	hitbox=typeof(hitbox)=="Instance" and hitbox or frame
+	local size=math.clamp(math.floor(tonumber(config.CursorGlowSize) or 120),24,600)
+	local glow=Create("Frame",{
+		Name="XLQPCursorGlow",
+		AnchorPoint=Vector2.new(0.5,0.5),
+		Size=UDim2.fromOffset(size,size),
+		Position=UDim2.fromScale(0.5,0.5),
+		BackgroundColor3=XLQPResolveTagColor(config.CursorGlowColor,Color3.fromRGB(255,255,255)),
+		BackgroundTransparency=1,
+		BorderSizePixel=0,
+		ZIndex=(tonumber(frame.ZIndex) or 1)+1,
+		Visible=false,
+		Parent=frame
+	})
+	glow:SetAttribute("NoLiquidGlass",true)
+	Create("UICorner",{CornerRadius=UDim.new(1,0),Parent=glow})
+	Create("UIGradient",{
+		Rotation=0,
+		Transparency=NumberSequence.new({
+			NumberSequenceKeypoint.new(0,0.35),
+			NumberSequenceKeypoint.new(0.45,0.72),
+			NumberSequenceKeypoint.new(1,1)
+		}),
+		Parent=glow
+	})
+	local peak=math.clamp(tonumber(config.CursorGlowStrength) or 0.72,0,1)
+	local active=false
+	local function place(x,y)
+		local origin=frame.AbsolutePosition
+		glow.Position=UDim2.fromOffset(x-origin.X,y-origin.Y)
+	end
+	AddConnection(hitbox.MouseEnter,function()
+		if frame:GetAttribute("XLQPLockedOut")==true then return end
+		active=true
+		glow.Visible=true
+		TweenService:Create(glow,TweenInfo.new(0.18,Enum.EasingStyle.Quad),{BackgroundTransparency=peak}):Play()
+	end)
+	AddConnection(hitbox.MouseLeave,function()
+		active=false
+		TweenService:Create(glow,TweenInfo.new(0.24,Enum.EasingStyle.Quad),{BackgroundTransparency=1}):Play()
+		task.delay(0.26,function() if not active and glow.Parent then glow.Visible=false end end)
+	end)
+	AddConnection(hitbox.MouseMoved,function(x,y)
+		if not active then return end
+		place(x,y)
+	end)
+	AddConnection(hitbox.InputChanged,function(input)
+		if not active then return end
+		if input.UserInputType==Enum.UserInputType.Touch then place(input.Position.X,input.Position.Y) end
+	end)
+	return glow
+end
+
+function XLQPApplyElementStyle(frame,config,object)
+	if typeof(frame)~="Instance" or type(config)~="table" then return frame end
+	local style=type(config.Style)=="table" and config.Style or config
+	local function pick(...)
+		for index=1,select("#",...) do
+			local value=select(index,...)
+			if value~=nil then return value end
+		end
+		return nil
+	end
+	local background=pick(style.BackgroundColor,style.BackgroundColor3,config.BackgroundColor)
+	if background~=nil then
+		local resolved=XLQPResolveTagColor(background,nil)
+		if resolved then
+			frame.BackgroundColor3=resolved
+			frame:SetAttribute("XLQPStyleLocked",true)
+		end
+	end
+	local transparency=pick(style.BackgroundTransparency,config.BackgroundTransparency)
+	if tonumber(transparency) then frame.BackgroundTransparency=math.clamp(tonumber(transparency),0,1) end
+	local radius=pick(style.CornerRadius,config.CornerRadius)
+	if tonumber(radius) then
+		local corner=frame:FindFirstChildOfClass("UICorner")
+		if not corner then corner=Create("UICorner",{Parent=frame}) end
+		corner.CornerRadius=UDim.new(0,math.max(0,math.floor(tonumber(radius))))
+	end
+	local height=pick(config.WrapperHeight,config.ElementHeight)
+	if type(config.Style)=="table" then height=pick(config.Style.Height,height) end
+	if tonumber(height) and frame.Size.Y.Scale==0 then
+		frame.Size=UDim2.new(frame.Size.X.Scale,frame.Size.X.Offset,0,math.max(1,math.floor(tonumber(height))))
+	end
+	local stroke=frame:FindFirstChildOfClass("UIStroke")
+	local strokeColor=pick(style.StrokeColor,config.StrokeColor,style.OutlineColor)
+	local strokeTransparency=pick(style.StrokeTransparency,config.StrokeTransparency)
+	local strokeThickness=pick(style.StrokeThickness,config.StrokeThickness)
+	if (strokeColor~=nil or strokeTransparency~=nil or strokeThickness~=nil) then
+		if not stroke then stroke=Create("UIStroke",{Parent=frame}) end
+		if strokeColor~=nil then
+			local resolved=XLQPResolveTagColor(strokeColor,nil)
+			if resolved then stroke.Color=resolved stroke:SetAttribute("XLQPStyleLocked",true) end
+		end
+		if tonumber(strokeTransparency) then stroke.Transparency=math.clamp(tonumber(strokeTransparency),0,1) end
+		if tonumber(strokeThickness) then stroke.Thickness=math.max(0,tonumber(strokeThickness)) end
+	end
+	local titleColor=pick(style.TitleColor,config.TitleColor,style.TextColor3)
+	local descriptionColor=pick(style.DescriptionColor,config.DescriptionColor)
+	local titleSize=pick(style.TitleSize,config.TitleSize)
+	local fontValue=pick(style.Font,config.Font)
+	local resolvedFont
+	if fontValue~=nil then
+		if typeof(fontValue)=="EnumItem" then
+			resolvedFont=fontValue
+		else
+			local ok,found=pcall(function() return Enum.Font[tostring(fontValue):gsub("%s+","")] end)
+			if ok then resolvedFont=found end
+		end
+	end
+	for _,child in ipairs(frame:GetDescendants()) do
+		if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+			local isTitle=child.Name=="Content" or child.Name=="Title" or child.Name=="EntryTitle"
+			local isDescription=child.Name=="Description" or child.Name=="Desc" or child.Name=="EntryDescription"
+			if titleColor~=nil and isTitle then
+				local resolved=XLQPResolveTagColor(titleColor,nil)
+				if resolved then child.TextColor3=resolved child:SetAttribute("XLQPTextColorOverride",resolved) end
+			end
+			if descriptionColor~=nil and isDescription then
+				local resolved=XLQPResolveTagColor(descriptionColor,nil)
+				if resolved then child.TextColor3=resolved child:SetAttribute("XLQPTextColorOverride",resolved) end
+			end
+			if tonumber(titleSize) and isTitle then child.TextSize=math.clamp(tonumber(titleSize),6,48) end
+			if resolvedFont then child.Font=resolvedFont end
+		end
+	end
+	if type(object)=="table" then
+		function object:SetStyle(newStyle)
+			if type(newStyle)~="table" then return self end
+			XLQPApplyElementStyle(frame,{Style=newStyle},nil)
+			return self
+		end
+	end
+	return frame
+end
+
+
+XLQPGifDecoderUrl="https://gist.githubusercontent.com/ArvidSilverlock/38e25c9ddba8d63be3314580cd08c28d/raw"
+local XLQPGifDecoder
+local XLQPGifSupport
+local XLQPGifSupportReason
+local XLQPGifRuntime={}
+XLQPGifRuntime.__index=XLQPGifRuntime
+
+local function XLQPGifTrim(text)
+	return tostring(text or ""):match("^%s*(.-)%s*$")
+end
+
+local function XLQPGifSupported()
+	if XLQPGifSupport~=nil then return XLQPGifSupport,XLQPGifSupportReason end
+	if type(buffer)~="table" or type(buffer.create)~="function" or type(buffer.copy)~="function" then
+		XLQPGifSupport=false
+		XLQPGifSupportReason="This executor does not support buffers."
+		return false,XLQPGifSupportReason
+	end
+	local contentOk,contentFromObject=pcall(function() return Content and Content.fromObject end)
+	if not contentOk or type(contentFromObject)~="function" then
+		XLQPGifSupport=false
+		XLQPGifSupportReason="This executor does not support Content.fromObject."
+		return false,XLQPGifSupportReason
+	end
+	local ok,editable=pcall(function()
+		return game:GetService("AssetService"):CreateEditableImage({Size=Vector2.new(4,4)})
+	end)
+	if not ok or not editable then
+		XLQPGifSupport=false
+		XLQPGifSupportReason="This executor does not support EditableImage."
+		return false,XLQPGifSupportReason
+	end
+	pcall(function() editable:Destroy() end)
+	XLQPGifSupport=true
+	XLQPGifSupportReason="Supported"
+	return true,XLQPGifSupportReason
+end
+
+local function XLQPGifCleanHtml(text)
+	text=tostring(text or "")
+	text=text:gsub("\\u002F","/"):gsub("\\u003A",":"):gsub("\\u003F","?"):gsub("\\u0026","&"):gsub("\\u003D","="):gsub("\\/","/"):gsub("&amp;","&")
+	return text
+end
+
+function XLQPGifTenorMedia(html)
+	html=XLQPGifCleanHtml(html)
+	local patterns={'property="og:image"%s+content="(https://[^"]+)"','name="twitter:image"%s+content="(https://[^"]+)"','"contentUrl":"(https://[^"]+)"','"image":"(https://[^"]+)"','"url":"(https://[^"]+)"'}
+	for _,pattern in ipairs(patterns) do
+		local result=html:match(pattern)
+		if result then
+			result=XLQPGifCleanHtml(result)
+			if result:find("tenor") and result:lower():find("%.gif") then return result end
+		end
+	end
+	local fallback
+	for value in html:gmatch('https://[^"%s<>]+') do
+		value=XLQPGifCleanHtml(value)
+		if value:find("media%d*%.tenor%.com") then
+			if value:lower():find("%.gif") then return value end
+			if not fallback and value:find("/m/") then fallback=value end
+		end
+	end
+	return fallback
+end
+
+function XLQPGifBytes(link)
+	link=XLQPGifTrim(link)
+	if link=="" then return nil,"Paste a GIF or Tenor URL first." end
+	local function fetch(url,accept)
+		local requester=XLQPResolveRequest()
+		if type(requester)=="function" then
+			local ok,response=pcall(requester,{
+				Url=url,
+				Method="GET",
+				Headers={
+					["User-Agent"]="Mozilla/5.0",
+					["Accept"]=accept or "*/*"
+				}
+			})
+			if ok and type(response)=="table" then
+				local code=tonumber(response.StatusCode or response.Status) or 0
+				local body=response.Body or response.body
+				if type(body)=="string" and body~="" and (response.Success==true or code==0 or (code>=200 and code<300)) then
+					return body
+				end
+			end
+		end
+		local ok,body=pcall(function() return game:HttpGet(url,true) end)
+		if ok and type(body)=="string" and body~="" then return body end
+	end
+	local body=fetch(link,"image/gif,image/*,text/html,*/*")
+	if not body then return nil,"The GIF could not be downloaded." end
+	if body:sub(1,6)=="GIF87a" or body:sub(1,6)=="GIF89a" then return body end
+	if link:lower():find("tenor%.com") then
+		local mediaUrl=XLQPGifTenorMedia(body)
+		if not mediaUrl then return nil,"A GIF file was not found on that Tenor page." end
+		body=fetch(mediaUrl,"image/gif,image/*,*/*")
+		if body and (body:sub(1,6)=="GIF87a" or body:sub(1,6)=="GIF89a") then return body end
+		return nil,"Tenor returned invalid GIF data."
+	end
+	return nil,"The URL did not return a GIF file."
+end
+
+function XLQPGifGetDecoder()
+	if type(XLQPGifDecoder)=="function" then return XLQPGifDecoder end
+	if type(loadstring)~="function" then return nil end
+	local source=XLQPSecureHttpGet(XLQPGifDecoderUrl)
+	if type(source)~="string" or source=="" then return nil end
+	local ok,result=pcall(function()
+		local chunk=loadstring(source)
+		return chunk and chunk()
+	end)
+	if ok and type(result)=="function" then XLQPGifDecoder=result end
+	return XLQPGifDecoder
+end
+
+local function XLQPGifCloneBuffer(source)
+	local output=buffer.create(buffer.len(source))
+	buffer.copy(output,0,source,0,buffer.len(source))
+	return output
+end
+
+local function XLQPGifSetPixel(target,offset,r,g,b,a)
+	buffer.writeu8(target,offset,r)
+	buffer.writeu8(target,offset+1,g)
+	buffer.writeu8(target,offset+2,b)
+	buffer.writeu8(target,offset+3,a)
+end
+
+function XLQPGifClearArea(canvas,canvasWidth,canvasHeight,x,y,width,height,r,g,b,a)
+	local startX=math.max(0,x)
+	local startY=math.max(0,y)
+	local endX=math.min(canvasWidth-1,x+width-1)
+	local endY=math.min(canvasHeight-1,y+height-1)
+	if endX<startX or endY<startY then return end
+	for py=startY,endY do
+		for px=startX,endX do
+			XLQPGifSetPixel(canvas,(py*canvasWidth+px)*4,r,g,b,a)
+		end
+	end
+end
+
+local function XLQPGifDrawPixel(canvas,canvasWidth,canvasHeight,palette,x,y,paletteIndex)
+	if x<0 or y<0 or x>=canvasWidth or y>=canvasHeight then return end
+	local paletteOffset=paletteIndex*3
+	if paletteOffset+2>=buffer.len(palette) then return end
+	XLQPGifSetPixel(canvas,(y*canvasWidth+x)*4,buffer.readu8(palette,paletteOffset),buffer.readu8(palette,paletteOffset+1),buffer.readu8(palette,paletteOffset+2),255)
+end
+
+function XLQPGifDrawFrame(canvas,gif,frame)
+	local palette=frame.localPalette or gif.globalPalette
+	if not palette then return end
+	local transparentIndex=frame.transparentIndex
+	local source=frame.paletteIndexes
+	local sourceIndex=0
+	if frame.isInterlaced then
+		for _,pass in ipairs({{0,8},{4,8},{2,4},{1,2}}) do
+			for row=pass[1],frame.height-1,pass[2] do
+				for x=0,frame.width-1 do
+					local paletteIndex=buffer.readu8(source,sourceIndex)
+					sourceIndex+=1
+					if transparentIndex==nil or paletteIndex~=transparentIndex then XLQPGifDrawPixel(canvas,gif.width,gif.height,palette,frame.left+x,frame.top+row,paletteIndex) end
+				end
+			end
+		end
+	else
+		for y=0,frame.height-1 do
+			for x=0,frame.width-1 do
+				local paletteIndex=buffer.readu8(source,sourceIndex)
+				sourceIndex+=1
+				if transparentIndex==nil or paletteIndex~=transparentIndex then XLQPGifDrawPixel(canvas,gif.width,gif.height,palette,frame.left+x,frame.top+y,paletteIndex) end
+			end
+		end
+	end
+end
+
+function XLQPGifRenderFrames(gif,isCancelled)
+	local pixelCount=tonumber(gif.width)*tonumber(gif.height)
+	if gif.width>1024 or gif.height>1024 then return nil,nil,"GIF dimensions exceed 1024 × 1024." end
+	if #gif.frames>240 then return nil,nil,"GIF contains more than 240 frames." end
+	if pixelCount*#gif.frames>24000000 then return nil,nil,"GIF needs too much animation memory." end
+	local canvas=buffer.create(pixelCount*4)
+	local frames={}
+	local delays={}
+	local backgroundR,backgroundG,backgroundB,backgroundA=0,0,0,0
+	if gif.globalPalette and gif.backgroundIndex~=nil then
+		local offset=gif.backgroundIndex*3
+		if offset>=0 and offset+2<buffer.len(gif.globalPalette) then
+			backgroundR=buffer.readu8(gif.globalPalette,offset)
+			backgroundG=buffer.readu8(gif.globalPalette,offset+1)
+			backgroundB=buffer.readu8(gif.globalPalette,offset+2)
+			backgroundA=255
+		end
+	end
+	local previousFrame
+	local restoreBuffer
+	for index,frame in ipairs(gif.frames) do
+		if isCancelled and isCancelled() then return nil,nil,"Cancelled" end
+		if previousFrame then
+			local disposal=tonumber(previousFrame.disposalMethod) or 0
+			if disposal==2 then
+				XLQPGifClearArea(canvas,gif.width,gif.height,previousFrame.left,previousFrame.top,previousFrame.width,previousFrame.height,backgroundR,backgroundG,backgroundB,backgroundA)
+			elseif disposal==3 and restoreBuffer then
+				buffer.copy(canvas,0,restoreBuffer,0,buffer.len(restoreBuffer))
+			end
+		end
+		restoreBuffer=(tonumber(frame.disposalMethod) or 0)==3 and XLQPGifCloneBuffer(canvas) or nil
+		XLQPGifDrawFrame(canvas,gif,frame)
+		frames[index]=XLQPGifCloneBuffer(canvas)
+		local delay=tonumber(frame.frameDelay) or 0.08
+		if delay>5 then delay/=100 end
+		delays[index]=math.clamp(delay>0 and delay or 0.08,1/30,10)
+		previousFrame=frame
+		if index%2==0 then game:GetService("RunService").Heartbeat:Wait() end
+	end
+	return frames,delays
+end
+
+function XLQPGifRuntime.new(layers,notify)
+	return setmetatable({Layers=layers or {},Notify=notify,Frames={},Delays={},FrameIndex=1,Elapsed=0,Token=0,Active=false},XLQPGifRuntime)
+end
+
+function XLQPGifRuntime:_Notify(text,success)
+	if type(self.Notify)=="function" then pcall(self.Notify,tostring(text or ""),success==true) end
+end
+
+function XLQPGifRuntime:Stop(clearLayers)
+	self.Token+=1
+	self.Active=false
+	if self.Connection then pcall(function() self.Connection:Disconnect() end) self.Connection=nil end
+	if self.Editable then pcall(function() self.Editable:Destroy() end) self.Editable=nil end
+	self.Content=nil
+	self.Frames={}
+	self.Delays={}
+	self.FrameIndex=1
+	self.Elapsed=0
+	if clearLayers~=false then
+		for _,layer in ipairs(self.Layers) do
+			if layer and layer.Parent then
+				pcall(function() layer.ImageContent=nil end)
+				layer.Visible=false
+			end
+		end
+	end
+end
+
+function XLQPGifRuntime:_ShowFrame(index)
+	if not self.Editable or not self.Frames[index] then return end
+	pcall(function() self.Editable:WritePixelsBuffer(Vector2.zero,Vector2.new(self.Width,self.Height),self.Frames[index]) end)
+end
+
+function XLQPGifRuntime:Apply(link,transparency)
+	lo... （残り5 MB）
